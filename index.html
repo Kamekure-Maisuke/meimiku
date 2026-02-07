@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Book Manager</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <!-- 認証画面 -->
+        <div id="auth-screen">
+            <div class="auth-card">
+                <h1>Book Manager</h1>
+                <div class="tab-bar">
+                    <button class="active" data-tab="login">ログイン</button>
+                    <button data-tab="signup">サインアップ</button>
+                </div>
+
+                <form id="login-form" class="auth-form active">
+                    <div id="login-error" class="auth-error"></div>
+                    <div class="form-group">
+                        <label for="login-email">メールアドレス</label>
+                        <input type="email" id="login-email" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">パスワード</label>
+                        <input type="password" id="login-password" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">ログイン</button>
+                </form>
+
+                <form id="signup-form" class="auth-form">
+                    <div id="signup-error" class="auth-error"></div>
+                    <div class="form-group">
+                        <label for="signup-name">名前</label>
+                        <input type="text" id="signup-name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">メールアドレス</label>
+                        <input type="email" id="signup-email" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">パスワード</label>
+                        <input type="password" id="signup-password" required minlength="6" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">サインアップ</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- メイン画面 -->
+        <div id="main-screen">
+            <header>
+                <span id="user-info"></span>
+                <button class="btn-logout" id="btn-logout">ログアウト</button>
+            </header>
+
+            <div class="container">
+                <div class="card">
+                    <h2>本を追加</h2>
+                    <form class="add-book-form" id="add-book-form">
+                        <div class="form-group">
+                            <label>タイトル</label>
+                            <input type="text" id="new-title" required />
+                        </div>
+                        <div class="form-group">
+                            <label>著者</label>
+                            <input type="text" id="new-author" required />
+                        </div>
+                        <div class="form-group">
+                            <label>出版年</label>
+                            <input type="number" id="new-year" min="1000" max="9999" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">追加</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>本の一覧</h2>
+                    <form id="search-form" class="search-form">
+                        <input type="text" id="search-query" placeholder="タイトルまたは著者で検索..." />
+                        <button type="submit" class="btn btn-primary">検索</button>
+                        <button type="button" id="search-clear" class="btn">クリア</button>
+                    </form>
+                    <div id="books-loading" class="placeholder">読み込み中...</div>
+                    <table id="books-table" style="display: none">
+                        <thead>
+                            <tr>
+                                <th>タイトル</th>
+                                <th>著者</th>
+                                <th>出版年</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="books-body"></tbody>
+                    </table>
+                    <div id="pagination-controls" class="pagination" style="display: none">
+                        <button id="btn-prev" class="btn btn-page" disabled>&laquo; 前へ</button>
+                        <span id="page-info" class="page-info">1 / 1</span>
+                        <button id="btn-next" class="btn btn-page" disabled>次へ &raquo;</button>
+                    </div>
+                    <div id="books-empty" class="placeholder" style="display: none">
+                        本がまだ登録されていません。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
+        <script src="app.js"></script>
+    </body>
+</html>
