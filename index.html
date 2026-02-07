@@ -5,43 +5,45 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Book Manager</title>
         <link rel="stylesheet" href="style.css" />
+        <script defer src="app.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
     </head>
-    <body>
+    <body x-cloak x-data="bookApp()" x-init="init()">
         <!-- 認証画面 -->
-        <div id="auth-screen">
+        <div id="auth-screen" x-show="!loggedIn">
             <div class="auth-card">
                 <h1>Book Manager</h1>
                 <div class="tab-bar">
-                    <button class="active" data-tab="login">ログイン</button>
-                    <button data-tab="signup">サインアップ</button>
+                    <button :class="{ active: tab === 'login' }" @click="tab = 'login'">ログイン</button>
+                    <button :class="{ active: tab === 'signup' }" @click="tab = 'signup'">サインアップ</button>
                 </div>
 
-                <form id="login-form" class="auth-form active">
-                    <div id="login-error" class="auth-error"></div>
+                <form x-show="tab === 'login'" @submit.prevent="login()">
+                    <div class="auth-error" x-show="loginError" x-text="loginError"></div>
                     <div class="form-group">
-                        <label for="login-email">メールアドレス</label>
-                        <input type="email" id="login-email" required />
+                        <label>メールアドレス</label>
+                        <input type="email" x-model="loginForm.email" required />
                     </div>
                     <div class="form-group">
-                        <label for="login-password">パスワード</label>
-                        <input type="password" id="login-password" required />
+                        <label>パスワード</label>
+                        <input type="password" x-model="loginForm.password" required />
                     </div>
                     <button type="submit" class="btn btn-primary">ログイン</button>
                 </form>
 
-                <form id="signup-form" class="auth-form">
-                    <div id="signup-error" class="auth-error"></div>
+                <form x-show="tab === 'signup'" @submit.prevent="signup()">
+                    <div class="auth-error" x-show="signupError" x-text="signupError"></div>
                     <div class="form-group">
-                        <label for="signup-name">名前</label>
-                        <input type="text" id="signup-name" required />
+                        <label>名前</label>
+                        <input type="text" x-model="signupForm.name" required />
                     </div>
                     <div class="form-group">
-                        <label for="signup-email">メールアドレス</label>
-                        <input type="email" id="signup-email" required />
+                        <label>メールアドレス</label>
+                        <input type="email" x-model="signupForm.email" required />
                     </div>
                     <div class="form-group">
-                        <label for="signup-password">パスワード</label>
-                        <input type="password" id="signup-password" required minlength="6" />
+                        <label>パスワード</label>
+                        <input type="password" x-model="signupForm.password" required minlength="6" />
                     </div>
                     <button type="submit" class="btn btn-primary">サインアップ</button>
                 </form>
@@ -49,27 +51,27 @@
         </div>
 
         <!-- メイン画面 -->
-        <div id="main-screen">
+        <div id="main-screen" x-show="loggedIn">
             <header>
-                <span id="user-info"></span>
-                <button class="btn-logout" id="btn-logout">ログアウト</button>
+                <span x-text="userName + ' でログイン中'"></span>
+                <button class="btn-logout" @click="logout()">ログアウト</button>
             </header>
 
             <div class="container">
                 <div class="card">
                     <h2>本を追加</h2>
-                    <form class="add-book-form" id="add-book-form">
+                    <form class="add-book-form" @submit.prevent="addBook()">
                         <div class="form-group">
                             <label>タイトル</label>
-                            <input type="text" id="new-title" required />
+                            <input type="text" x-model="newBook.title" required />
                         </div>
                         <div class="form-group">
                             <label>著者</label>
-                            <input type="text" id="new-author" required />
+                            <input type="text" x-model="newBook.author" required />
                         </div>
                         <div class="form-group">
                             <label>出版年</label>
-                            <input type="number" id="new-year" min="1000" max="9999" />
+                            <input type="number" x-model="newBook.year" min="1000" max="9999" />
                         </div>
                         <button type="submit" class="btn btn-primary">追加</button>
                     </form>
@@ -77,13 +79,15 @@
 
                 <div class="card">
                     <h2>本の一覧</h2>
-                    <form id="search-form" class="search-form">
-                        <input type="text" id="search-query" placeholder="タイトルまたは著者で検索..." />
+                    <form class="search-form" @submit.prevent="doSearch()">
+                        <input type="text" x-model="searchQuery" placeholder="タイトルまたは著者で検索..." />
                         <button type="submit" class="btn btn-primary">検索</button>
-                        <button type="button" id="search-clear" class="btn">クリア</button>
+                        <button type="button" @click="clearSearch()" class="btn">クリア</button>
                     </form>
-                    <div id="books-loading" class="placeholder">読み込み中...</div>
-                    <table id="books-table" style="display: none">
+
+                    <div x-show="loading" class="placeholder">読み込み中...</div>
+
+                    <table x-show="!loading && books.length > 0">
                         <thead>
                             <tr>
                                 <th>タイトル</th>
@@ -92,21 +96,53 @@
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="books-body"></tbody>
+                        <tbody>
+                            <template x-for="book in books" :key="book.id">
+                                <tr>
+                                    <td>
+                                        <span x-show="editingId !== book.id" x-text="book.title"></span>
+                                        <input x-show="editingId === book.id" class="edit-input" x-model="editForm.title" />
+                                    </td>
+                                    <td>
+                                        <span x-show="editingId !== book.id" x-text="book.author"></span>
+                                        <input x-show="editingId === book.id" class="edit-input" x-model="editForm.author" />
+                                    </td>
+                                    <td>
+                                        <span x-show="editingId !== book.id" x-text="book.published_year || '—'"></span>
+                                        <input x-show="editingId === book.id" class="edit-input" type="number" x-model="editForm.year" />
+                                    </td>
+                                    <td>
+                                        <div x-show="editingId !== book.id" class="actions">
+                                            <button class="btn-icon btn-fav" :class="{ active: favMap[book.id] }"
+                                                @click="toggleFav(book.id)"
+                                                x-html="favMap[book.id] ? '&#9829;' : '&#9825;'"
+                                                title="お気に入り"></button>
+                                            <button class="btn-icon btn-edit" @click="startEdit(book)" title="編集">&#9998;</button>
+                                            <button class="btn-icon btn-delete" @click="deleteBook(book.id)" title="削除">&#128465;</button>
+                                        </div>
+                                        <div x-show="editingId === book.id" class="actions">
+                                            <button class="btn-icon btn-save" @click="saveEdit(book.id)" title="保存">&#10003;</button>
+                                            <button class="btn-icon btn-cancel" @click="cancelEdit()" title="キャンセル">&#10007;</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
                     </table>
-                    <div id="pagination-controls" class="pagination" style="display: none">
-                        <button id="btn-prev" class="btn btn-page" disabled>&laquo; 前へ</button>
-                        <span id="page-info" class="page-info">1 / 1</span>
-                        <button id="btn-next" class="btn btn-page" disabled>次へ &raquo;</button>
+
+                    <div x-show="showPagination" class="pagination">
+                        <button class="btn btn-page" :disabled="currentPage <= 1" @click="prevPage()">&laquo; 前へ</button>
+                        <span class="page-info" x-text="currentPage + ' / ' + totalPages"></span>
+                        <button class="btn btn-page" :disabled="currentPage >= totalPages" @click="nextPage()">次へ &raquo;</button>
                     </div>
-                    <div id="books-empty" class="placeholder" style="display: none">
+
+                    <div x-show="!loading && books.length === 0 && totalCount === 0" class="placeholder">
                         本がまだ登録されていません。
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="toast" class="toast"></div>
-        <script src="app.js"></script>
+        <div class="toast" :class="{ show: toastVisible, error: toastError }" x-text="toastMsg"></div>
     </body>
 </html>

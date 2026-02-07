@@ -1,3 +1,5 @@
+[x-cloak] { display: none !important; }
+
 *,
 *::before,
 *::after {
@@ -74,8 +76,6 @@ body {
     font-weight: 600;
 }
 
-.auth-form { display: none; }
-.auth-form.active { display: block; }
 
 .form-group { margin-bottom: 1rem; }
 
@@ -123,11 +123,9 @@ body {
     color: var(--red);
     font-size: 0.875rem;
     margin-bottom: 1rem;
-    display: none;
 }
 
 /* メイン画面 */
-#main-screen { display: none; }
 
 header {
     background: var(--blue);
