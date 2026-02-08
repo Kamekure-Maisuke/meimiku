@@ -144,6 +144,93 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Chat Toggle Button -->
+            <button class="chat-toggle-btn" @click="toggleChat()">
+                <span x-text="showChat ? '📚 Books' : '💬 Chat'"></span>
+            </button>
+
+            <!-- Chat Overlay -->
+            <div class="chat-overlay" x-show="showChat">
+                <div class="chat-container">
+                    <!-- Left Sidebar: Room List -->
+                    <div class="chat-sidebar">
+                        <div class="chat-header">
+                            <h3>チャットルーム</h3>
+                            <span class="connection-status" :class="{ connected: chatConnected }">
+                                <span x-text="chatConnected ? '🟢 接続中' : '🔴 切断'"></span>
+                            </span>
+                        </div>
+
+                        <!-- Create Room Form -->
+                        <div class="create-room-form">
+                            <input type="text" x-model="newRoomName" placeholder="ルーム名" />
+                            <input type="text" x-model="newRoomDescription" placeholder="説明（任意）" />
+                            <button class="btn btn-primary btn-sm" @click="createRoom()">作成</button>
+                        </div>
+
+                        <!-- Room List -->
+                        <div class="room-list">
+                            <template x-for="room in chatRooms" :key="room.id">
+                                <div class="room-item" :class="{ active: currentRoomId === room.id }">
+                                    <div @click="room.is_member ? enterRoom(room.id) : null" :class="{ clickable: room.is_member }">
+                                        <div class="room-name" x-text="room.name"></div>
+                                        <div class="room-info">
+                                            <span x-show="room.is_member" x-text="'参加中'"></span>
+                                            <span x-show="!room.is_member" x-text="'未参加'"></span>
+                                        </div>
+                                    </div>
+                                    <button x-show="!room.is_member" class="btn btn-sm btn-join" @click="joinRoom(room.id)">参加</button>
+                                </div>
+                            </template>
+                            <div x-show="chatRooms.length === 0" class="placeholder-small">
+                                ルームがありません
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Messages -->
+                    <div class="chat-main">
+                        <div x-show="!currentRoomId" class="placeholder">
+                            左側からルームを選択してください
+                        </div>
+
+                        <div x-show="currentRoomId" class="chat-room">
+                            <div class="chat-room-header">
+                                <span x-text="chatRooms.find(r => r.id === currentRoomId)?.name || 'チャット'"></span>
+                            </div>
+
+                            <div class="chat-messages">
+                                <template x-for="msg in sortedMessages" :key="msg.id">
+                                    <div class="chat-message">
+                                        <div class="message-header">
+                                            <span class="message-author" x-text="msg.user_name"></span>
+                                            <span class="message-time" x-text="new Date(msg.created_at).toLocaleString()"></span>
+                                        </div>
+                                        <div class="message-body" x-text="msg.message"></div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="typing-indicator" x-show="Object.keys(typingUsers).length > 0">
+                                <span x-text="Object.values(typingUsers).join(', ') + ' が入力中...'"></span>
+                            </div>
+
+                            <div class="chat-input">
+                                <input
+                                    type="text"
+                                    x-model="messageInput"
+                                    @input="handleTyping()"
+                                    @keyup.enter="sendChatMessage()"
+                                    placeholder="メッセージを入力..."
+                                    :disabled="!chatConnected"
+                                />
+                                <button class="btn btn-primary" @click="sendChatMessage()" :disabled="!chatConnected || !messageInput.trim()">送信</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="toast" :class="{ show: toastVisible, error: toastError }" x-text="toastMsg"></div>
