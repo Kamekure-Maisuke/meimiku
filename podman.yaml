@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
     - name: postgres
-      image: postgres:alpine
+      image: postgres:18-alpine
       ports:
         - containerPort: 5432
           hostPort: 5432
@@ -20,7 +20,7 @@ spec:
         - name: init-sql
           mountPath: /docker-entrypoint-initdb.d
     - name: postgrest
-      image: postgrest/postgrest
+      image: postgrest/postgrest:v14.4
       ports:
         - containerPort: 3000
           hostPort: 3000
