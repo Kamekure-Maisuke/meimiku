@@ -27,6 +27,7 @@ function bookApp() {
     loading: false,
     searchQuery: "",
     hasSearched: false,
+    showFavoritesOnly: false,
     currentPage: 1,
     totalCount: 0,
     editingId: null,
@@ -151,18 +152,38 @@ function bookApp() {
       this.loading = true;
       try {
         const offset = (this.currentPage - 1) * PAGE_SIZE;
+
+        // お気に入り情報を取得
+        const f = await this.api("/favorites");
+        this.favMap = {};
+        (f || []).forEach((x) => {
+          this.favMap[x.book_id] = true;
+        });
+
         let path = `/books?order=id&limit=${PAGE_SIZE}&offset=${offset}`;
+
+        // お気に入りフィルタが有効な場合
+        if (this.showFavoritesOnly) {
+          const favIds = Object.keys(this.favMap);
+          if (favIds.length === 0) {
+            // お気に入りが1つもない場合
+            this.books = [];
+            this.totalCount = 0;
+            this.loading = false;
+            return;
+          }
+          path += `&id=in.(${favIds.join(",")})`;
+        }
+
+        // 検索クエリがある場合
         if (this.searchQuery) {
           const enc = encodeURIComponent("*" + this.searchQuery + "*");
           path += `&or=(title.ilike.${enc},author.ilike.${enc})`;
         }
 
-        const [res, f] = await Promise.all([
-          fetch(API + path, {
-            headers: this.headers({ Prefer: "count=exact" }),
-          }),
-          this.api("/favorites"),
-        ]);
+        const res = await fetch(API + path, {
+          headers: this.headers({ Prefer: "count=exact" }),
+        });
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -179,10 +200,6 @@ function bookApp() {
         }
 
         this.books = (await res.json()) || [];
-        this.favMap = {};
-        (f || []).forEach((x) => {
-          this.favMap[x.book_id] = true;
-        });
       } catch (err) {
         this.toast("データの取得に失敗しました: " + err.message, true);
         this.books = [];
@@ -304,6 +321,13 @@ function bookApp() {
     clearSearch() {
       this.searchQuery = "";
       this.hasSearched = false;
+      this.showFavoritesOnly = false;
+      this.currentPage = 1;
+      this.loadBooks();
+    },
+
+    toggleFavFilter() {
+      this.showFavoritesOnly = !this.showFavoritesOnly;
       this.currentPage = 1;
       this.loadBooks();
     },

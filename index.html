@@ -82,6 +82,9 @@
                     <form class="search-form" @submit.prevent="doSearch()">
                         <input type="text" x-model="searchQuery" placeholder="タイトルまたは著者で検索..." />
                         <button type="submit" class="btn btn-primary">検索</button>
+                        <button type="button" @click="toggleFavFilter()" class="btn" :class="{ 'btn-primary': showFavoritesOnly }">
+                            <span x-html="showFavoritesOnly ? '&#9829;' : '&#9825;'"></span> お気に入りのみ
+                        </button>
                         <button type="button" @click="clearSearch()" class="btn">クリア</button>
                     </form>
 
