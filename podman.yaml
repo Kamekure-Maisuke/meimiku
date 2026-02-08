@@ -28,6 +28,18 @@ spec:
       volumeMounts:
         - name: postgrest-config
           mountPath: /etc/postgrest
+    - name: chat-server
+      image: localhost/chat-server:latest
+      ports:
+        - containerPort: 3001
+          hostPort: 3001
+      env:
+        - name: WS_PORT
+          value: "3001"
+        - name: DATABASE_URL
+          value: "postgres://meimiku:meimiku@localhost:5432/meimiku"
+        - name: JWT_SECRET
+          value: "my-super-secret-jwt-key-for-meimiku-2024"
   volumes:
     - name: init-sql
       hostPath:
