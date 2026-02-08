@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@db/postgres": "jsr:@db/postgres@^0.19"
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-env server.ts"
+  }
+}

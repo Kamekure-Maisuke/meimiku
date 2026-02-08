@@ -1,12 +1,13 @@
-FROM node:24-alpine
+FROM denoland/deno:alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --production
+COPY deno.json ./
+COPY server.ts ./
 
-COPY server.js ./
+# Cache dependencies
+RUN deno cache server.ts
 
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+CMD ["deno", "run", "--allow-net", "--allow-env", "server.ts"]
