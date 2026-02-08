@@ -24,19 +24,16 @@ spec:
       ports:
         - containerPort: 3000
           hostPort: 3000
-      env:
-        - name: PGRST_DB_URI
-          value: postgres://meimiku:meimiku@localhost:5432/meimiku
-        - name: PGRST_DB_SCHEMAS
-          value: api
-        - name: PGRST_DB_ANON_ROLE
-          value: web_anon
-        - name: PGRST_JWT_SECRET
-          value: "my-super-secret-jwt-key-for-meimiku-2024"
-        - name: PGRST_APP_SETTINGS_JWT_SECRET
-          value: "my-super-secret-jwt-key-for-meimiku-2024"
+      command: ["postgrest", "/etc/postgrest/postgrest.conf"]
+      volumeMounts:
+        - name: postgrest-config
+          mountPath: /etc/postgrest
   volumes:
     - name: init-sql
       hostPath:
         path: __PWD__/sql
+        type: Directory
+    - name: postgrest-config
+      hostPath:
+        path: __PWD__/config
         type: Directory
