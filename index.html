@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="ja">
+<html :lang="currentLang">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Book Manager</title>
+        <title x-text="t.app_title">Book Manager</title>
         <link rel="stylesheet" href="style.css" />
+        <script defer src="i18n.js"></script>
         <script defer src="app.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
     </head>
@@ -12,40 +13,44 @@
         <!-- 認証画面 -->
         <div id="auth-screen" x-show="!loggedIn">
             <div class="auth-card">
-                <h1>Book Manager</h1>
+                <h1 x-text="t.app_title">Book Manager</h1>
+                <div class="lang-switcher">
+                    <button @click="switchLanguage('ja')" :class="{ active: currentLang === 'ja' }">日本語</button>
+                    <button @click="switchLanguage('en')" :class="{ active: currentLang === 'en' }">English</button>
+                </div>
                 <div class="tab-bar">
-                    <button :class="{ active: tab === 'login' }" @click="tab = 'login'">ログイン</button>
-                    <button :class="{ active: tab === 'signup' }" @click="tab = 'signup'">サインアップ</button>
+                    <button :class="{ active: tab === 'login' }" @click="tab = 'login'" x-text="t.login">ログイン</button>
+                    <button :class="{ active: tab === 'signup' }" @click="tab = 'signup'" x-text="t.signup">サインアップ</button>
                 </div>
 
                 <form x-show="tab === 'login'" @submit.prevent="login()">
                     <div class="auth-error" x-show="loginError" x-text="loginError"></div>
                     <div class="form-group">
-                        <label>メールアドレス</label>
+                        <label x-text="t.email">メールアドレス</label>
                         <input type="email" x-model="loginForm.email" required />
                     </div>
                     <div class="form-group">
-                        <label>パスワード</label>
+                        <label x-text="t.password">パスワード</label>
                         <input type="password" x-model="loginForm.password" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">ログイン</button>
+                    <button type="submit" class="btn btn-primary" x-text="t.login">ログイン</button>
                 </form>
 
                 <form x-show="tab === 'signup'" @submit.prevent="signup()">
                     <div class="auth-error" x-show="signupError" x-text="signupError"></div>
                     <div class="form-group">
-                        <label>名前</label>
+                        <label x-text="t.name">名前</label>
                         <input type="text" x-model="signupForm.name" required />
                     </div>
                     <div class="form-group">
-                        <label>メールアドレス</label>
+                        <label x-text="t.email">メールアドレス</label>
                         <input type="email" x-model="signupForm.email" required />
                     </div>
                     <div class="form-group">
-                        <label>パスワード</label>
+                        <label x-text="t.password">パスワード</label>
                         <input type="password" x-model="signupForm.password" required minlength="6" />
                     </div>
-                    <button type="submit" class="btn btn-primary">サインアップ</button>
+                    <button type="submit" class="btn btn-primary" x-text="t.signup">サインアップ</button>
                 </form>
             </div>
         </div>
@@ -53,50 +58,56 @@
         <!-- メイン画面 -->
         <div id="main-screen" x-show="loggedIn">
             <header>
-                <span x-text="userName + ' でログイン中'"></span>
-                <button class="btn-logout" @click="logout()">ログアウト</button>
+                <span x-text="userName + ' ' + t.logged_in_as"></span>
+                <div class="header-actions">
+                    <div class="lang-switcher">
+                        <button @click="switchLanguage('ja')" :class="{ active: currentLang === 'ja' }">日本語</button>
+                        <button @click="switchLanguage('en')" :class="{ active: currentLang === 'en' }">English</button>
+                    </div>
+                    <button class="btn-logout" @click="logout()" x-text="t.logout">ログアウト</button>
+                </div>
             </header>
 
             <div class="container">
                 <div class="card">
-                    <h2>本を追加</h2>
+                    <h2 x-text="t.add_book">本を追加</h2>
                     <form class="add-book-form" @submit.prevent="addBook()">
                         <div class="form-group">
-                            <label>タイトル</label>
+                            <label x-text="t.title">タイトル</label>
                             <input type="text" x-model="newBook.title" required />
                         </div>
                         <div class="form-group">
-                            <label>著者</label>
+                            <label x-text="t.author">著者</label>
                             <input type="text" x-model="newBook.author" required />
                         </div>
                         <div class="form-group">
-                            <label>出版年</label>
+                            <label x-text="t.published_year">出版年</label>
                             <input type="number" x-model="newBook.year" min="1000" max="9999" />
                         </div>
-                        <button type="submit" class="btn btn-primary">追加</button>
+                        <button type="submit" class="btn btn-primary" x-text="t.add">追加</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <h2>本の一覧</h2>
+                    <h2 x-text="t.book_list">本の一覧</h2>
                     <form class="search-form" @submit.prevent="doSearch()">
-                        <input type="text" x-model="searchQuery" placeholder="タイトルまたは著者で検索..." />
-                        <button type="submit" class="btn btn-primary">検索</button>
+                        <input type="text" x-model="searchQuery" :placeholder="t.search_placeholder" />
+                        <button type="submit" class="btn btn-primary" x-text="t.search">検索</button>
                         <button type="button" @click="toggleFavFilter()" class="btn" :class="{ 'btn-primary': showFavoritesOnly }">
-                            <span x-html="showFavoritesOnly ? '&#9829;' : '&#9825;'"></span> お気に入りのみ
+                            <span x-html="showFavoritesOnly ? '&#9829;' : '&#9825;'"></span> <span x-text="t.favorites_only">お気に入りのみ</span>
                         </button>
-                        <button type="button" @click="clearSearch()" class="btn">クリア</button>
+                        <button type="button" @click="clearSearch()" class="btn" x-text="t.clear">クリア</button>
                     </form>
 
-                    <div x-show="loading" class="placeholder">読み込み中...</div>
+                    <div x-show="loading" class="placeholder" x-text="t.loading">読み込み中...</div>
 
                     <table x-show="!loading && books.length > 0">
                         <thead>
                             <tr>
-                                <th>タイトル</th>
-                                <th>著者</th>
-                                <th>出版年</th>
-                                <th>操作</th>
+                                <th x-text="t.title">タイトル</th>
+                                <th x-text="t.author">著者</th>
+                                <th x-text="t.published_year">出版年</th>
+                                <th x-text="t.actions">操作</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -134,12 +145,12 @@
                     </table>
 
                     <div x-show="showPagination" class="pagination">
-                        <button class="btn btn-page" :disabled="currentPage <= 1" @click="prevPage()">&laquo; 前へ</button>
+                        <button class="btn btn-page" :disabled="currentPage <= 1" @click="prevPage()">&laquo; <span x-text="t.prev_page">前へ</span></button>
                         <span class="page-info" x-text="currentPage + ' / ' + totalPages"></span>
-                        <button class="btn btn-page" :disabled="currentPage >= totalPages" @click="nextPage()">次へ &raquo;</button>
+                        <button class="btn btn-page" :disabled="currentPage >= totalPages" @click="nextPage()"><span x-text="t.next_page">次へ</span> &raquo;</button>
                     </div>
 
-                    <div x-show="!loading && books.length === 0 && totalCount === 0" class="placeholder">
+                    <div x-show="!loading && books.length === 0 && totalCount === 0" class="placeholder" x-text="t.no_books">
                         本がまだ登録されていません。
                     </div>
                 </div>
@@ -147,7 +158,7 @@
 
             <!-- Chat Toggle Button -->
             <button class="chat-toggle-btn" @click="toggleChat()">
-                <span x-text="showChat ? '📚 Books' : '💬 Chat'"></span>
+                <span x-text="showChat ? ('📚 ' + t.books) : ('💬 ' + t.chat)"></span>
             </button>
 
             <!-- Chat Overlay -->
@@ -156,17 +167,17 @@
                     <!-- Left Sidebar: Room List -->
                     <div class="chat-sidebar">
                         <div class="chat-header">
-                            <h3>チャットルーム</h3>
+                            <h3 x-text="t.chat_rooms">チャットルーム</h3>
                             <span class="connection-status" :class="{ connected: chatConnected }">
-                                <span x-text="chatConnected ? '🟢 接続中' : '🔴 切断'"></span>
+                                <span x-text="chatConnected ? ('🟢 ' + t.connected) : ('🔴 ' + t.disconnected)"></span>
                             </span>
                         </div>
 
                         <!-- Create Room Form -->
                         <div class="create-room-form">
-                            <input type="text" x-model="newRoomName" placeholder="ルーム名" />
-                            <input type="text" x-model="newRoomDescription" placeholder="説明（任意）" />
-                            <button class="btn btn-primary btn-sm" @click="createRoom()">作成</button>
+                            <input type="text" x-model="newRoomName" :placeholder="t.room_name" />
+                            <input type="text" x-model="newRoomDescription" :placeholder="t.description_optional" />
+                            <button class="btn btn-primary btn-sm" @click="createRoom()" x-text="t.create">作成</button>
                         </div>
 
                         <!-- Room List -->
@@ -176,14 +187,14 @@
                                     <div @click="room.is_member ? enterRoom(room.id) : null" :class="{ clickable: room.is_member }">
                                         <div class="room-name" x-text="room.name"></div>
                                         <div class="room-info">
-                                            <span x-show="room.is_member" x-text="'参加中'"></span>
-                                            <span x-show="!room.is_member" x-text="'未参加'"></span>
+                                            <span x-show="room.is_member" x-text="t.joined"></span>
+                                            <span x-show="!room.is_member" x-text="t.not_joined"></span>
                                         </div>
                                     </div>
-                                    <button x-show="!room.is_member" class="btn btn-sm btn-join" @click="joinRoom(room.id)">参加</button>
+                                    <button x-show="!room.is_member" class="btn btn-sm btn-join" @click="joinRoom(room.id)" x-text="t.join">参加</button>
                                 </div>
                             </template>
-                            <div x-show="chatRooms.length === 0" class="placeholder-small">
+                            <div x-show="chatRooms.length === 0" class="placeholder-small" x-text="t.no_rooms">
                                 ルームがありません
                             </div>
                         </div>
@@ -191,13 +202,13 @@
 
                     <!-- Right Panel: Messages -->
                     <div class="chat-main">
-                        <div x-show="!currentRoomId" class="placeholder">
+                        <div x-show="!currentRoomId" class="placeholder" x-text="t.select_room">
                             左側からルームを選択してください
                         </div>
 
                         <div x-show="currentRoomId" class="chat-room">
                             <div class="chat-room-header">
-                                <span x-text="chatRooms.find(r => r.id === currentRoomId)?.name || 'チャット'"></span>
+                                <span x-text="chatRooms.find(r => r.id === currentRoomId)?.name || t.chat"></span>
                             </div>
 
                             <div class="chat-messages">
@@ -213,7 +224,7 @@
                             </div>
 
                             <div class="typing-indicator" x-show="Object.keys(typingUsers).length > 0">
-                                <span x-text="Object.values(typingUsers).join(', ') + ' が入力中...'"></span>
+                                <span x-text="Object.values(typingUsers).join(', ') + ' ' + t.typing"></span>
                             </div>
 
                             <div class="chat-input">
@@ -222,10 +233,10 @@
                                     x-model="messageInput"
                                     @input="handleTyping()"
                                     @keyup.enter="sendChatMessage()"
-                                    placeholder="メッセージを入力..."
+                                    :placeholder="t.message_placeholder"
                                     :disabled="!chatConnected"
                                 />
-                                <button class="btn btn-primary" @click="sendChatMessage()" :disabled="!chatConnected || !messageInput.trim()">送信</button>
+                                <button class="btn btn-primary" @click="sendChatMessage()" :disabled="!chatConnected || !messageInput.trim()" x-text="t.send">送信</button>
                             </div>
                         </div>
                     </div>

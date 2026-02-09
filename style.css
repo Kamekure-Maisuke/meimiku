@@ -46,9 +46,37 @@ body {
 
 .auth-card h1 {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     font-size: 1.5rem;
     color: var(--blue);
+}
+
+.lang-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.lang-switcher button {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #f9f9f9;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    color: var(--gray);
+}
+
+.lang-switcher button:hover {
+    background: #eee;
+}
+
+.lang-switcher button.active {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
 }
 
 .tab-bar {
@@ -135,6 +163,34 @@ header {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-actions .lang-switcher {
+    margin-bottom: 0;
+}
+
+.header-actions .lang-switcher button {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.header-actions .lang-switcher button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.header-actions .lang-switcher button.active {
+    background: rgba(255, 255, 255, 0.4);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .btn-logout {
@@ -602,6 +658,7 @@ tbody tr:hover { background: #fafafa; }
     .add-book-form .form-group { min-width: 100%; }
     .add-book-form .btn { width: 100%; }
     header { flex-direction: column; gap: 0.5rem; text-align: center; }
+    .header-actions { flex-direction: column; gap: 0.5rem; }
     table { font-size: 0.875rem; }
     .pagination { gap: 0.5rem; padding: 0.5rem 0; }
     .btn-page { padding: 0.25rem 0.5rem; font-size: 0.8125rem; }

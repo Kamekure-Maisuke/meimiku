@@ -2,6 +2,19 @@ const API = "http://localhost:3000";
 const WS_URL = "ws://localhost:3001";
 const PAGE_SIZE = 10;
 
+// ============================================================
+// i18n (Internationalization)
+// ============================================================
+// i18nData is defined in i18n.js
+
+function detectLanguage() {
+  const stored = localStorage.getItem('language');
+  if (stored && (stored === 'ja' || stored === 'en')) return stored;
+
+  const browserLang = navigator.language.toLowerCase();
+  return browserLang.startsWith('ja') ? 'ja' : 'en';
+}
+
 function parseJwt(t) {
   try {
     return JSON.parse(atob(t.split(".")[1]));
@@ -111,6 +124,10 @@ function createChatClient(token, onMessage, onUserJoined, onUserLeft, onTyping, 
 
 function bookApp() {
   return {
+    // 言語
+    currentLang: detectLanguage(),
+    t: {},
+
     // 認証
     loggedIn: false,
     tab: "login",
@@ -170,6 +187,8 @@ function bookApp() {
     // ===== 初期化 =====
 
     init() {
+      this.updateTranslations();
+
       if (this.token) {
         const p = parseJwt(this.token);
         if (p?.exp && p.exp * 1000 > Date.now()) {
@@ -182,6 +201,19 @@ function bookApp() {
         localStorage.removeItem("token");
         this.token = null;
       }
+    },
+
+    // ===== 言語切り替え =====
+
+    updateTranslations() {
+      this.t = i18nData[this.currentLang] || i18nData['ja'] || {};
+    },
+
+    switchLanguage(lang) {
+      if (lang !== 'ja' && lang !== 'en') return;
+      this.currentLang = lang;
+      localStorage.setItem('language', lang);
+      this.updateTranslations();
     },
 
     // ===== ヘルパー =====
