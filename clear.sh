@@ -6,6 +6,7 @@ echo "========================================"
 echo ""
 echo "WARNING: This will delete:"
 echo "  - All database data (volumes)"
+echo "  - SeaweedFS data (./seaweedfs-data/)"
 echo "  - Unused images"
 echo "  - Unused containers"
 echo "  - Build cache"
@@ -19,6 +20,9 @@ case "$answer" in
         echo ""
         echo "Removing volumes..."
         podman volume prune -f
+        echo ""
+        echo "Removing SeaweedFS data..."
+        rm -rf ./seaweedfs-data
         echo ""
         echo "Cleaning up system (images, containers, cache)..."
         podman system prune -af

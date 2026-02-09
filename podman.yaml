@@ -40,12 +40,33 @@ spec:
           value: "postgres://meimiku:meimiku@localhost:5432/meimiku"
         - name: JWT_SECRET
           value: "my-super-secret-jwt-key-for-meimiku-2024"
+    - name: seaweedfs
+      image: chrislusf/seaweedfs:latest
+      ports:
+        - containerPort: 8333
+          hostPort: 8333
+        - containerPort: 8888
+          hostPort: 8888
+      args: ["server", "-s3", "-dir=/data", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
+      volumeMounts:
+        - name: seaweedfs-data
+          mountPath: /data
+        - name: seaweedfs-config
+          mountPath: /etc/seaweedfs
   volumes:
     - name: init-sql
       hostPath:
         path: __PWD__/sql
         type: Directory
     - name: postgrest-config
+      hostPath:
+        path: __PWD__/config
+        type: Directory
+    - name: seaweedfs-data
+      hostPath:
+        path: __PWD__/seaweedfs-data
+        type: DirectoryOrCreate
+    - name: seaweedfs-config
       hostPath:
         path: __PWD__/config
         type: Directory

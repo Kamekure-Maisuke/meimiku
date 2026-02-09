@@ -43,7 +43,11 @@ const i18nData = {
     edit: "編集",
     delete: "削除",
     save: "保存",
-    cancel: "キャンセル"
+    cancel: "キャンセル",
+    image: "画像",
+    upload_image: "画像をアップロード",
+    upload: "アップロード",
+    uploading: "アップロード中..."
   },
   en: {
     app_title: "Book Manager",
@@ -89,6 +93,10 @@ const i18nData = {
     edit: "Edit",
     delete: "Delete",
     save: "Save",
-    cancel: "Cancel"
+    cancel: "Cancel",
+    image: "Image",
+    upload_image: "Upload Image",
+    upload: "Upload",
+    uploading: "Uploading..."
   }
 };

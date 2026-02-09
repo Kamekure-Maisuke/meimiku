@@ -1,5 +1,7 @@
 const API = "http://localhost:3000";
 const WS_URL = "ws://localhost:3001";
+const S3_ENDPOINT = "http://localhost:8333";
+const S3_BUCKET = "meimiku";
 const PAGE_SIZE = 10;
 
 // ============================================================
@@ -170,6 +172,16 @@ function bookApp() {
     newRoomName: "",
     newRoomDescription: "",
 
+    // 画像
+    bookImages: {},
+    showImageUpload: false,
+    selectedImageFile: null,
+    uploadProgress: 0,
+    uploading: false,
+    uploadingBookId: null,
+    viewingImage: null,
+    showImageView: false,
+
     get totalPages() {
       return Math.max(1, Math.ceil(this.totalCount / PAGE_SIZE));
     },
@@ -195,6 +207,7 @@ function bookApp() {
           this.userName = p.user_name || p.email || "ユーザー";
           this.loggedIn = true;
           this.loadBooks();
+          this.loadBookImages();
           this.initChat();
           return;
         }
@@ -286,6 +299,7 @@ function bookApp() {
       this.userName = p?.user_name || p?.email || "ユーザー";
       this.loggedIn = true;
       this.loadBooks();
+      this.loadBookImages();
       this.initChat();
     },
 
@@ -689,6 +703,156 @@ function bookApp() {
       if (this.showChat && this.chatRooms.length === 0) {
         this.loadChatRooms();
       }
+    },
+
+    // ===== 画像管理 =====
+
+    async loadBookImages() {
+      try {
+        const images = await this.api("/book_images?order=created_at.desc");
+        this.bookImages = {};
+        (images || []).forEach((img) => {
+          if (!this.bookImages[img.book_id]) {
+            this.bookImages[img.book_id] = [];
+          }
+          this.bookImages[img.book_id].push(img);
+        });
+      } catch (err) {
+        console.error("Failed to load book images:", err);
+      }
+    },
+
+    openImageUpload(bookId) {
+      this.uploadingBookId = bookId;
+      this.showImageUpload = true;
+      this.selectedImageFile = null;
+      this.uploadProgress = 0;
+    },
+
+    closeImageUpload() {
+      this.showImageUpload = false;
+      this.uploadingBookId = null;
+      this.selectedImageFile = null;
+      this.uploadProgress = 0;
+      const input = document.getElementById("imageInput");
+      if (input) input.value = "";
+    },
+
+    handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+          this.toast("画像ファイルを選択してください", true);
+          return;
+        }
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          this.toast("ファイルサイズは10MB以下にしてください", true);
+          return;
+        }
+        this.selectedImageFile = file;
+      }
+    },
+
+    async uploadImage() {
+      if (!this.selectedImageFile || !this.uploadingBookId) return;
+
+      this.uploading = true;
+      this.uploadProgress = 0;
+
+      try {
+        const file = this.selectedImageFile;
+        const bookId = this.uploadingBookId;
+        const timestamp = Date.now();
+        const s3Key = `books/${bookId}/${timestamp}_${file.name}`;
+
+        // Upload to SeaweedFS S3
+        const uploadUrl = `${S3_ENDPOINT}/${S3_BUCKET}/${s3Key}`;
+
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+          }
+        });
+
+        const uploadPromise = new Promise((resolve, reject) => {
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed: ${xhr.status}`));
+            }
+          });
+          xhr.addEventListener("error", () => reject(new Error("Network error")));
+          xhr.open("PUT", uploadUrl);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
+
+        await uploadPromise;
+
+        // Save metadata to PostgreSQL
+        await this.api("/book_images", {
+          method: "POST",
+          body: JSON.stringify({
+            book_id: bookId,
+            s3_key: s3Key,
+            file_name: file.name,
+            content_type: file.type,
+            file_size: file.size,
+          }),
+        });
+
+        this.toast("画像をアップロードしました");
+        this.closeImageUpload();
+        await this.loadBookImages();
+      } catch (err) {
+        this.toast("アップロードに失敗しました: " + err.message, true);
+      } finally {
+        this.uploading = false;
+        this.uploadProgress = 0;
+      }
+    },
+
+    async deleteImage(imageId, bookId) {
+      if (!confirm("この画像を削除しますか？")) return;
+
+      try {
+        // Get image metadata to delete from S3
+        const images = this.bookImages[bookId] || [];
+        const image = images.find(img => img.id === imageId);
+
+        if (image) {
+          // Delete from S3
+          const deleteUrl = `${S3_ENDPOINT}/${S3_BUCKET}/${image.s3_key}`;
+          await fetch(deleteUrl, { method: "DELETE" });
+        }
+
+        // Delete metadata from PostgreSQL
+        await this.api("/book_images?id=eq." + imageId, { method: "DELETE" });
+
+        this.toast("画像を削除しました");
+        await this.loadBookImages();
+      } catch (err) {
+        this.toast("削除に失敗しました: " + err.message, true);
+      }
+    },
+
+    getImageUrl(s3Key) {
+      return `${S3_ENDPOINT}/${S3_BUCKET}/${s3Key}`;
+    },
+
+    viewImage(img) {
+      this.viewingImage = img;
+      this.showImageView = true;
+    },
+
+    closeImageView() {
+      this.showImageView = false;
+      this.viewingImage = null;
     },
   };
 }

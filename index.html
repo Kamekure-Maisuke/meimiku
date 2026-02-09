@@ -107,6 +107,7 @@
                                 <th x-text="t.title">タイトル</th>
                                 <th x-text="t.author">著者</th>
                                 <th x-text="t.published_year">出版年</th>
+                                <th x-text="t.image">画像</th>
                                 <th x-text="t.actions">操作</th>
                             </tr>
                         </thead>
@@ -124,6 +125,21 @@
                                     <td>
                                         <span x-show="editingId !== book.id" x-text="book.published_year || '—'"></span>
                                         <input x-show="editingId === book.id" class="edit-input" type="number" x-model="editForm.year" />
+                                    </td>
+                                    <td>
+                                        <div class="book-image-container">
+                                            <template x-if="bookImages[book.id] && bookImages[book.id].length > 0">
+                                                <div class="book-thumbnail-grid">
+                                                    <template x-for="img in bookImages[book.id]" :key="img.id">
+                                                        <div class="thumbnail-wrapper">
+                                                            <img :src="getImageUrl(img.s3_key)" :alt="img.file_name" class="book-thumbnail" @click="viewImage(img)" />
+                                                            <button class="btn-icon btn-delete-img" @click="deleteImage(img.id, book.id)" title="削除">×</button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <button class="btn-icon btn-upload" @click="openImageUpload(book.id)" title="画像追加">📷</button>
+                                        </div>
                                     </td>
                                     <td>
                                         <div x-show="editingId !== book.id" class="actions">
@@ -239,6 +255,43 @@
                                 <button class="btn btn-primary" @click="sendChatMessage()" :disabled="!chatConnected || !messageInput.trim()" x-text="t.send">送信</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload Modal -->
+            <div class="modal-overlay" x-show="showImageUpload" @click.self="closeImageUpload()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 x-text="t.upload_image">画像をアップロード</h3>
+                        <button class="btn-close" @click="closeImageUpload()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="file" @change="handleImageSelect($event)" accept="image/*" id="imageInput" />
+                        <div x-show="selectedImageFile" class="image-preview">
+                            <p x-text="selectedImageFile?.name"></p>
+                            <p x-text="selectedImageFile ? (selectedImageFile.size / 1024).toFixed(2) + ' KB' : ''"></p>
+                        </div>
+                        <div x-show="uploadProgress > 0 && uploadProgress < 100" class="progress-bar">
+                            <div class="progress-fill" :style="`width: ${uploadProgress}%`"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" @click="closeImageUpload()" x-text="t.cancel">キャンセル</button>
+                        <button class="btn btn-primary" @click="uploadImage()" :disabled="!selectedImageFile || uploading" x-text="uploading ? t.uploading : t.upload">アップロード</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image View Modal -->
+            <div class="modal-overlay" x-show="showImageView" @click.self="closeImageView()">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h3 x-text="viewingImage?.file_name"></h3>
+                        <button class="btn-close" @click="closeImageView()">×</button>
+                    </div>
+                    <div class="modal-body modal-body-image">
+                        <img :src="viewingImage ? getImageUrl(viewingImage.s3_key) : ''" :alt="viewingImage?.file_name" class="full-image" />
                     </div>
                 </div>
             </div>
