@@ -2,11 +2,7 @@
 -- お知らせ機能
 -- ============================================
 
--- 1. usersテーブルにis_adminカラムを追加
-ALTER TABLE api.users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
-CREATE INDEX IF NOT EXISTS idx_users_is_admin ON api.users(is_admin) WHERE is_admin = true;
-
--- 2. お知らせテーブル
+-- 1. お知らせテーブル
 CREATE TABLE IF NOT EXISTS api.announcements (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL CHECK (length(title) > 0 AND length(title) <= 200),
@@ -252,6 +248,7 @@ SELECT
   ) AS is_read
 FROM api.announcements a
 INNER JOIN api.users u ON u.id = a.created_by
+WHERE a.is_published = true OR api.is_current_user_admin()
 ORDER BY a.priority DESC, a.created_at DESC;
 
 -- 13. RLSポリシー設定

@@ -14,6 +14,7 @@ CREATE TABLE api.users (
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

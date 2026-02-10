@@ -53,6 +53,14 @@ spec:
           mountPath: /data
         - name: seaweedfs-config
           mountPath: /etc/seaweedfs
+    - name: pgweb
+      image: sosedoff/pgweb:latest
+      ports:
+        - containerPort: 8081
+          hostPort: 8081
+      env:
+        - name: DATABASE_URL
+          value: "postgres://meimiku:meimiku@localhost:5432/meimiku?sslmode=disable"
   volumes:
     - name: init-sql
       hostPath:
