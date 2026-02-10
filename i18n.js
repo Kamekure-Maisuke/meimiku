@@ -47,7 +47,20 @@ const i18nData = {
     image: "画像",
     upload_image: "画像をアップロード",
     upload: "アップロード",
-    uploading: "アップロード中..."
+    uploading: "アップロード中...",
+    announcements: "お知らせ",
+    no_announcements: "お知らせはありません",
+    create_announcement: "お知らせ作成",
+    edit_announcement: "お知らせ編集",
+    announcement_title: "タイトル",
+    announcement_content: "内容",
+    publish_immediately: "すぐに公開",
+    priority: "優先度",
+    mark_all_read: "全て既読",
+    mark_as_read: "既読にする",
+    unread: "未読",
+    draft: "下書き",
+    close: "閉じる"
   },
   en: {
     app_title: "Book Manager",
@@ -97,6 +110,19 @@ const i18nData = {
     image: "Image",
     upload_image: "Upload Image",
     upload: "Upload",
-    uploading: "Uploading..."
+    uploading: "Uploading...",
+    announcements: "Announcements",
+    no_announcements: "No announcements",
+    create_announcement: "Create Announcement",
+    edit_announcement: "Edit Announcement",
+    announcement_title: "Title",
+    announcement_content: "Content",
+    publish_immediately: "Publish Immediately",
+    priority: "Priority",
+    mark_all_read: "Mark All Read",
+    mark_as_read: "Mark as Read",
+    unread: "Unread",
+    draft: "Draft",
+    close: "Close"
   }
 };

@@ -15,7 +15,9 @@ BEGIN
     json_build_object(
       'role', 'api_user',
       'user_id', new_user.id,
+      'user_name', new_user.name,
       'email', new_user.email,
+      'is_admin', COALESCE(new_user.is_admin, false),
       'exp', extract(epoch from now())::integer + 3600
     ),
     current_setting('app.settings.jwt_secret')
@@ -46,7 +48,9 @@ BEGIN
     json_build_object(
       'role', 'api_user',
       'user_id', usr.id,
+      'user_name', usr.name,
       'email', usr.email,
+      'is_admin', COALESCE(usr.is_admin, false),
       'exp', extract(epoch from now())::integer + 3600
     ),
     current_setting('app.settings.jwt_secret')

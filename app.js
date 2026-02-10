@@ -182,6 +182,20 @@ function bookApp() {
     viewingImage: null,
     showImageView: false,
 
+    // お知らせ
+    isAdmin: false,
+    announcements: [],
+    unreadCount: 0,
+    showAnnouncements: false,
+    showAnnouncementForm: false,
+    editingAnnouncementId: null,
+    announcementForm: {
+      title: "",
+      content: "",
+      is_published: false,
+      priority: 0,
+    },
+
     get totalPages() {
       return Math.max(1, Math.ceil(this.totalCount / PAGE_SIZE));
     },
@@ -205,10 +219,12 @@ function bookApp() {
         const p = parseJwt(this.token);
         if (p?.exp && p.exp * 1000 > Date.now()) {
           this.userName = p.user_name || p.email || "ユーザー";
+          this.isAdmin = p.is_admin || false;
           this.loggedIn = true;
           this.loadBooks();
           this.loadBookImages();
           this.initChat();
+          this.loadUnreadAnnouncementCount();
           return;
         }
         localStorage.removeItem("token");
@@ -297,10 +313,12 @@ function bookApp() {
       localStorage.setItem("token", this.token);
       const p = parseJwt(this.token);
       this.userName = p?.user_name || p?.email || "ユーザー";
+      this.isAdmin = p?.is_admin || false;
       this.loggedIn = true;
       this.loadBooks();
       this.loadBookImages();
       this.initChat();
+      this.loadUnreadAnnouncementCount();
     },
 
     logout() {
@@ -853,6 +871,173 @@ function bookApp() {
     closeImageView() {
       this.showImageView = false;
       this.viewingImage = null;
+    },
+
+    // ===== お知らせ =====
+
+    async loadUnreadAnnouncementCount() {
+      try {
+        const result = await this.api("/rpc/get_unread_announcement_count", {
+          method: "POST",
+        });
+        this.unreadCount = result || 0;
+      } catch (err) {
+        console.error("Failed to load unread announcement count:", err);
+        this.unreadCount = 0;
+      }
+    },
+
+    async loadAnnouncements() {
+      try {
+        const announcements = await this.api("/announcements_with_read_status");
+        this.announcements = announcements || [];
+      } catch (err) {
+        console.error("Failed to load announcements:", err);
+        this.toast("お知らせの取得に失敗しました: " + err.message, true);
+      }
+    },
+
+    async openAnnouncements() {
+      this.showAnnouncements = true;
+      await this.loadAnnouncements();
+    },
+
+    closeAnnouncements() {
+      this.showAnnouncements = false;
+      this.showAnnouncementForm = false;
+      this.editingAnnouncementId = null;
+      this.announcementForm = {
+        title: "",
+        content: "",
+        is_published: false,
+        priority: 0,
+      };
+    },
+
+    async markAsRead(announcementId) {
+      try {
+        await this.api("/rpc/mark_announcement_as_read", {
+          method: "POST",
+          body: JSON.stringify({ p_announcement_id: announcementId }),
+        });
+        await this.loadAnnouncements();
+        await this.loadUnreadAnnouncementCount();
+      } catch (err) {
+        this.toast("既読処理に失敗しました: " + err.message, true);
+      }
+    },
+
+    async markAllAsRead() {
+      try {
+        await this.api("/rpc/mark_all_announcements_as_read", {
+          method: "POST",
+        });
+        await this.loadAnnouncements();
+        await this.loadUnreadAnnouncementCount();
+        this.toast("全て既読にしました");
+      } catch (err) {
+        this.toast("既読処理に失敗しました: " + err.message, true);
+      }
+    },
+
+    openAnnouncementForm() {
+      this.showAnnouncementForm = true;
+      this.editingAnnouncementId = null;
+      this.announcementForm = {
+        title: "",
+        content: "",
+        is_published: false,
+        priority: 0,
+      };
+    },
+
+    editAnnouncement(announcement) {
+      this.showAnnouncementForm = true;
+      this.editingAnnouncementId = announcement.id;
+      this.announcementForm = {
+        title: announcement.title,
+        content: announcement.content,
+        is_published: announcement.is_published,
+        priority: announcement.priority,
+      };
+    },
+
+    async saveAnnouncement() {
+      const title = this.announcementForm.title.trim();
+      const content = this.announcementForm.content.trim();
+
+      if (!title || !content) {
+        this.toast("タイトルと内容は必須です", true);
+        return;
+      }
+
+      if (title.length > 200) {
+        this.toast("タイトルは200文字以内にしてください", true);
+        return;
+      }
+
+      if (content.length > 5000) {
+        this.toast("内容は5000文字以内にしてください", true);
+        return;
+      }
+
+      try {
+        if (this.editingAnnouncementId) {
+          // 更新
+          await this.api("/rpc/update_announcement", {
+            method: "POST",
+            body: JSON.stringify({
+              p_id: this.editingAnnouncementId,
+              p_title: title,
+              p_content: content,
+              p_is_published: this.announcementForm.is_published,
+              p_priority: this.announcementForm.priority,
+            }),
+          });
+          this.toast("お知らせを更新しました");
+        } else {
+          // 新規作成
+          await this.api("/rpc/create_announcement", {
+            method: "POST",
+            body: JSON.stringify({
+              p_title: title,
+              p_content: content,
+              p_is_published: this.announcementForm.is_published,
+              p_priority: this.announcementForm.priority,
+            }),
+          });
+          this.toast("お知らせを作成しました");
+        }
+
+        this.showAnnouncementForm = false;
+        this.editingAnnouncementId = null;
+        this.announcementForm = {
+          title: "",
+          content: "",
+          is_published: false,
+          priority: 0,
+        };
+        await this.loadAnnouncements();
+        await this.loadUnreadAnnouncementCount();
+      } catch (err) {
+        this.toast("保存に失敗しました: " + err.message, true);
+      }
+    },
+
+    async deleteAnnouncement(announcementId) {
+      if (!confirm("このお知らせを削除しますか？")) return;
+
+      try {
+        await this.api("/rpc/delete_announcement", {
+          method: "POST",
+          body: JSON.stringify({ p_id: announcementId }),
+        });
+        this.toast("お知らせを削除しました");
+        await this.loadAnnouncements();
+        await this.loadUnreadAnnouncementCount();
+      } catch (err) {
+        this.toast("削除に失敗しました: " + err.message, true);
+      }
     },
   };
 }

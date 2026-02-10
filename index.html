@@ -60,6 +60,12 @@
             <header>
                 <span x-text="userName + ' ' + t.logged_in_as"></span>
                 <div class="header-actions">
+                    <!-- お知らせアイコン -->
+                    <button class="btn-notification" @click="openAnnouncements()" :title="t.announcements">
+                        <span class="bell-icon">🔔</span>
+                        <span x-show="unreadCount > 0" class="notification-badge" x-text="unreadCount"></span>
+                    </button>
+
                     <div class="lang-switcher">
                         <button @click="switchLanguage('ja')" :class="{ active: currentLang === 'ja' }">日本語</button>
                         <button @click="switchLanguage('en')" :class="{ active: currentLang === 'en' }">English</button>
@@ -292,6 +298,95 @@
                     </div>
                     <div class="modal-body modal-body-image">
                         <img :src="viewingImage ? getImageUrl(viewingImage.s3_key) : ''" :alt="viewingImage?.file_name" class="full-image" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements Modal -->
+            <div class="modal-overlay modal-announcements" x-show="showAnnouncements" @click.self="closeAnnouncements()">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h3 x-text="t.announcements">お知らせ</h3>
+                        <button class="btn-close" @click="closeAnnouncements()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- お知らせ投稿フォーム（管理者のみ） -->
+                        <div x-show="isAdmin && !showAnnouncementForm" class="announcement-admin-actions">
+                            <button class="btn btn-primary" @click="openAnnouncementForm()" x-text="t.create_announcement">お知らせ作成</button>
+                        </div>
+
+                        <!-- お知らせフォーム -->
+                        <div x-show="showAnnouncementForm" class="announcement-form">
+                            <h4 x-text="editingAnnouncementId ? t.edit_announcement : t.create_announcement">お知らせ作成</h4>
+                            <div class="form-group">
+                                <label x-text="t.announcement_title">タイトル</label>
+                                <input type="text" x-model="announcementForm.title" :placeholder="t.announcement_title" maxlength="200" />
+                                <small x-text="announcementForm.title.length + ' / 200'"></small>
+                            </div>
+                            <div class="form-group">
+                                <label x-text="t.announcement_content">内容</label>
+                                <textarea x-model="announcementForm.content" :placeholder="t.announcement_content" rows="5" maxlength="5000"></textarea>
+                                <small x-text="announcementForm.content.length + ' / 5000'"></small>
+                            </div>
+                            <div class="form-group form-inline">
+                                <label>
+                                    <input type="checkbox" x-model="announcementForm.is_published" />
+                                    <span x-text="t.publish_immediately">すぐに公開</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label x-text="t.priority">優先度</label>
+                                <input type="number" x-model.number="announcementForm.priority" min="0" max="100" />
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn" @click="showAnnouncementForm = false" x-text="t.cancel">キャンセル</button>
+                                <button class="btn btn-primary" @click="saveAnnouncement()" x-text="t.save">保存</button>
+                            </div>
+                        </div>
+
+                        <!-- お知らせ一覧 -->
+                        <div x-show="!showAnnouncementForm" class="announcements-container">
+                            <!-- 全て既読ボタン -->
+                            <div x-show="unreadCount > 0" class="announcement-header-actions">
+                                <button class="btn btn-sm" @click="markAllAsRead()" x-text="t.mark_all_read">全て既読</button>
+                            </div>
+
+                            <!-- お知らせリスト -->
+                            <div class="announcements-list">
+                                <template x-for="announcement in announcements" :key="announcement.id">
+                                    <div class="announcement-item" :class="{ unread: !announcement.is_read }">
+                                        <div class="announcement-header-row">
+                                            <div class="announcement-badges">
+                                                <span x-show="!announcement.is_read" class="badge badge-unread" x-text="t.unread">未読</span>
+                                                <span x-show="!announcement.is_published && isAdmin" class="badge badge-draft" x-text="t.draft">下書き</span>
+                                                <span x-show="announcement.priority > 0" class="badge badge-priority" x-text="'⭐ ' + announcement.priority"></span>
+                                            </div>
+                                            <div class="announcement-meta">
+                                                <span class="announcement-author" x-text="announcement.author_name"></span>
+                                                <span class="announcement-date" x-text="new Date(announcement.created_at).toLocaleString()"></span>
+                                            </div>
+                                        </div>
+                                        <h4 class="announcement-title" x-text="announcement.title"></h4>
+                                        <p class="announcement-content" x-text="announcement.content"></p>
+                                        <div class="announcement-actions">
+                                            <button x-show="!announcement.is_read" class="btn btn-sm" @click="markAsRead(announcement.id)" x-text="t.mark_as_read">既読にする</button>
+                                            <template x-if="isAdmin">
+                                                <div class="admin-actions">
+                                                    <button class="btn btn-sm" @click="editAnnouncement(announcement)" x-text="t.edit">編集</button>
+                                                    <button class="btn btn-sm btn-delete" @click="deleteAnnouncement(announcement.id)" x-text="t.delete">削除</button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="announcements.length === 0" class="placeholder" x-text="t.no_announcements">
+                                    お知らせはありません
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" @click="closeAnnouncements()" x-text="t.close">閉じる</button>
                     </div>
                 </div>
             </div>
